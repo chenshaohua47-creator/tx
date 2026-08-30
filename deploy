@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# 私密聊天应用 - 一键部署脚本
+# 支持腾讯云 CloudBase
+# 
+# 使用方法: chmod +x deploy.sh && ./deploy.sh
+
+set -e
+
+echo "🚀 私密聊天应用 - 快速部署"
+echo "================================"
+echo ""
+
+# 检查必要工具
+check_command() {
+    if ! command -v $1 &> /dev/null; then
+        echo "❌ 错误: 未找到 $1"
+        echo "请先安装: npm install -g $2"
+        exit 1
+    fi
+}
+
+# 0. 检查环境
+echo "📋 检查环境..."
+check_command "node" "node"
+check_command "npm" "npm"
+echo "✅ Node.js 和 npm 已安装"
+echo ""
+
+# 1. 安装 CloudBase CLI
+echo "📦 安装 CloudBase CLI..."
+if ! command -v cloudbase &> /dev/null; then
+    npm install -g @cloudbase/cli
+    echo "✅ CloudBase CLI 安装完成"
+else
+    echo "✅ CloudBase CLI 已安装"
+fi
+echo ""
+
+# 2. 登录
+echo "🔐 登录腾讯云..."
+cloudbase login
+echo ""
+
+# 3. 获取环境信息
+echo "📝 输入环境信息"
+read -p "请输入环境 ID: " ENV_ID
+read -p "请输入环境所在地域 (ap-shanghai/ap-beijing等): " REGION
+echo ""
+
+# 4. 部署后端（云函数）
+echo "⚙️  部署云函数..."
+mkdir -p functions/chat/
+cp backend/cloud-function.js functions/chat/index.js
+
+# 创建 package.json
+cat > functions/chat/package.json << EOF
+{
+  "name": "chat",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "latest"
+  }
+}
+EOF
+
+cloudbase functions:deploy chat -l nodejs18 -e $ENV_ID
+echo "✅ 云函数部署完成"
+echo ""
+
+# 5. 提示手动启用 HTTP 触发
+echo "⚠️  下一步需要手动操作:"
+echo "   1. 打开 CloudBase 控制台: https://console.cloud.tencent.com/tcb"
+echo "   2. 进入环境 → 云函数 → chat"
+echo "   3. 启用 'HTTP 访问服务'"
+echo "   4. 记住生成的 URL (格式: https://xxx.app.tcloudbase.com/chat)"
+echo ""
+read -p "已完成上述步骤？按 Enter 继续..."
+echo ""
+
+# 6. 更新前端 API 地址
+echo "🔗 更新前端 API 地址..."
+read -p "请输入云函数的访问 URL: " API_URL
+
+# 替换前端代码中的 API 地址
+sed -i.bak "s|const API = .*|const API = \"$API_URL\";|" frontend/index.html
+rm frontend/index.html.bak 2>/dev/null || true
+echo "✅ API 地址已更新"
+echo ""
+
+# 7. 部署前端
+echo "🌐 部署前端..."
+cloudbase hosting:deploy frontend -e $ENV_ID
+echo "✅ 前端部署完成"
+echo ""
+
+# 8. 获取访问链接
+echo "📱 生成访问链接..."
+ACCESS_URL=$(cloudbase hosting:list -e $ENV_ID | grep index.html | awk '{print $1}')
+
+echo ""
+echo "================================"
+echo "✅ 部署完成！"
+echo "================================"
+echo ""
+echo "🎉 访问链接: $ACCESS_URL"
+echo ""
+echo "🔑 使用说明:"
+echo "   1. 打开上述链接，看到计算器界面"
+echo "   2. 按任意数字，然后按 '=' "
+echo "   3. 输入时间密码 (如当前 21:30，输入 2130)"
+echo "   4. 进入聊天界面"
+echo ""
+echo "📚 更多信息: 查看 docs/DEPLOYMENT.md"
+echo ""
