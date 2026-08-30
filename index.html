@@ -4,6 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Calculator</title>
+
+  <!-- PWA 全屏沉浸式配置（添加到主屏幕隐藏地址栏） -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="计算器" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#000000" />
+
+  <!-- 主屏幕图标 -->
+  <link rel="apple-touch-icon" href="https://ssl.gstatic.com/accessibility/apps/calculator/v1/calculator_512dp.png" />
+  <link rel="manifest" href="manifest.json" />
+
   <style>
     :root {
       --bg-color: #f2f2f7;
@@ -32,7 +44,7 @@
 
     /* ================= 1. 计算器伪装界面 ================= */
     #calc-app {
-      display: flex; flex-direction: column; height: 100vh; background: #000; color: #fff; justify-content: flex-end; padding: 20px;
+      display: flex; flex-direction: column; height: 100vh; background: #000; color: #fff; justify-content: flex-end; padding: 20px; padding-bottom: max(20px, env(safe-area-inset-bottom));
     }
     .calc-screen { font-size: 64px; text-align: right; margin-bottom: 20px; padding: 0 10px; font-weight: 300; }
     .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -48,7 +60,7 @@
     
     /* 导航栏 */
     .header {
-      height: 44px; background: var(--header-bg); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 0.5px solid var(--border-color); font-weight: 600; font-size: 17px;
+      height: calc(44px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); background: var(--header-bg); display: flex; align-items: center; justify-content: space-between; padding-left: 16px; padding-right: 16px; border-bottom: 0.5px solid var(--border-color); font-weight: 600; font-size: 17px;
     }
     .status-subtitle { font-size: 11px; font-weight: normal; color: #8e8e93; text-align: center; }
 
@@ -66,7 +78,7 @@
 
     /* 输入栏 */
     .input-bar {
-      min-height: 50px; background: var(--header-bg); border-top: 0.5px solid var(--border-color); display: flex; align-items: center; padding: 8px 12px; gap: 8px;
+      min-height: 50px; padding-bottom: max(8px, env(safe-area-inset-bottom)); background: var(--header-bg); border-top: 0.5px solid var(--border-color); display: flex; align-items: center; padding-left: 12px; padding-right: 12px; gap: 8px;
     }
     .input-box { flex: 1; background: var(--card-bg); border-radius: 6px; border: none; outline: none; padding: 8px 12px; font-size: 16px; color: var(--text-color); }
     .icon-btn { font-size: 24px; cursor: pointer; background: none; border: none; }
@@ -85,11 +97,12 @@
     .ios-alert { width: 270px; background: var(--card-bg); border-radius: 14px; text-align: center; overflow: hidden; }
     .ios-alert-title { font-weight: 600; padding: 16px 16px 4px; font-size: 17px; }
     .ios-alert-desc { font-size: 13px; padding: 0 16px 16px; color: #8e8e93; }
-    .ios-alert-btn { border-top: 0.5px solid var(--border-color); padding: 12px; font-color: #007aff; font-weight: 600; cursor: pointer; }
+    .ios-alert-btn { border-top: 0.5px solid var(--border-color); padding: 12px; color: #007aff; font-weight: 600; cursor: pointer; }
   </style>
 </head>
 <body>
 
+  <!-- 1. 伪装计算器界面 -->
   <div id="calc-app">
     <div class="calc-screen" id="calc-display">0</div>
     <div class="calc-grid">
@@ -115,6 +128,7 @@
     </div>
   </div>
 
+  <!-- 2. 聊天主界面 -->
   <div id="chat-app">
     <div class="header">
       <span style="font-size: 20px;">‹</span>
@@ -140,8 +154,10 @@
     <div id="emoji-panel"></div>
   </div>
 
+  <!-- 长按撤回菜单 -->
   <div id="context-menu" onclick="revokeMessage()">撤回</div>
 
+  <!-- 模拟软件更新弹窗 -->
   <div class="modal-overlay" id="update-modal">
     <div class="ios-alert">
       <div class="ios-alert-title">系统更新提示</div>
